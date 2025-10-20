@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Task Manager</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Панель управления</h1>
+        <div>
+            <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addTaskModal">➕ Добавить задачу</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">📁 Добавить категорию</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Категории -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">Категории</div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                            th:each="c : ${categories}">
+                            <span th:text="${c.name}"></span>
+                            <form th:action="@{'/categories/delete/' + ${c.id}}" method="post" class="m-0">
+                                <button class="btn btn-sm btn-danger">🗑️</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Задачи -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">Задачи</div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Статус</th>
+                            <th>Приоритет</th>
+                            <th>Срок</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t : ${tasks}">
+                            <td th:text="${t.name}"></td>
+                            <td th:text="${t.category != null ? t.category.name : '—'}"></td>
+                            <td th:text="${t.status}"></td>
+                            <td th:text="${t.priority}"></td>
+                            <td th:text="${t.dueDate}"></td>
+                            <td class="text-end">
+                                <form th:action="@{'/tasks/delete/' + ${t.id}}" method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-danger">🗑️</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка: добавить категорию -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/categories/save}" method="post">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Добавить категорию</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="name" class="form-control" placeholder="Название категории" required>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-primary" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка: добавить задачу -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form th:action="@{/tasks/save}" method="post">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Добавить задачу</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="name" class="form-control mb-3" placeholder="Название" required>
+                    <textarea name="description" class="form-control mb-3" placeholder="Описание"></textarea>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Категория</label>
+                            <select name="category.id" class="form-select">
+                                <option value="">Без категории</option>
+                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Приоритет</label>
+                            <select name="priority" class="form-select">
+                                <option th:each="p : ${priorities}" th:value="${p}" th:text="${p}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Статус</label>
+                            <select name="status" class="form-select">
+                                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="form-label mt-3">Срок выполнения</label>
+                    <input type="date" name="dueDate" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-success" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
