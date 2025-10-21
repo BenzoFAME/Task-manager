@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table (name = "task")
@@ -36,7 +38,8 @@ public class Task {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
-
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();

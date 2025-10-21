@@ -9,6 +9,10 @@ import com.example.taskmanagervar.model.Task;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 public class HomeController {
@@ -19,8 +23,13 @@ public class HomeController {
         this.taskService = taskService;
     }
     @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("tasks", taskService.getAllTasks());
+    public String home(@RequestParam(required = false) Long categoryId ,
+                       @RequestParam(required = false) Priority priority ,
+                       @RequestParam(required = false) Status status, String filter,
+                       @RequestParam(required = false) String sortBy ,
+                       Model model) {
+        List<Task> tasks = taskService.getFilteredAndSortedTasks(categoryId, priority, status, filter, sortBy);
+        model.addAttribute("tasks", tasks);
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("taskForm", new Task());
         model.addAttribute("categoryForm", new Category());

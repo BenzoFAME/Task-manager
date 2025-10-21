@@ -18,10 +18,13 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final CategoryService categoryService;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService , CategoryService categoryService) {
         this.taskService = taskService;
+        this.categoryService = categoryService;
     }
+
 
     @PostMapping("/save")
     public String saveTask(@ModelAttribute Task task) {
@@ -33,10 +36,36 @@ public class TaskController {
         return "redirect:/";
     }
 
+
     @PostMapping("/delete/{id}")
     public String deleteTask(@PathVariable Long id) {
         taskService.deleteTaskById(id);
         return "redirect:/";
+    }
+
+
+    @GetMapping("/edit/{id}")
+    public String editTask(@PathVariable Long id, Model model) {
+        Task task = taskService.getTaskById(id);
+        model.addAttribute("task", task);
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("priorities", Priority.values());
+        model.addAttribute("statuses", Status.values());
+        return "task-edit";
+    }
+
+
+    @PostMapping("/edit/{id}")
+    public String updateTask(@PathVariable Long id, @ModelAttribute Task task) {
+        task.setId(id);
+        taskService.updateTask(task);
+        return "redirect:/";
+    }
+    @GetMapping("/view/{id}")
+    public String viewTask(@PathVariable Long id, Model model) {
+        Task task = taskService.getTaskById(id);
+        model.addAttribute("task", task);
+        return "task-view";
     }
 }
 
