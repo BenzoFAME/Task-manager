@@ -40,6 +40,8 @@ public class Task {
     private Category category;
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Subtask> subtasks = new ArrayList<>();
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();

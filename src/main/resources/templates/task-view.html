@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <title th:text="'Задача: ' + ${task.name}">Task Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const dueDate = new Date(document.getElementById("dueDate").textContent.trim());
+            const dueDateElement = document.getElementById("dueDate");
+            if (!dueDateElement) return;
+
+            const dueDate = new Date(dueDateElement.textContent.trim());
             const timerElement = document.getElementById("countdown");
 
             function updateTimer() {
@@ -48,35 +52,74 @@
             <li class="list-group-item"><strong>Категория:</strong> <span th:text="${task.category != null ? task.category.name : '—'}"></span></li>
             <li class="list-group-item"><strong>Приоритет:</strong> <span th:text="${task.priority}"></span></li>
             <li class="list-group-item"><strong>Статус:</strong> <span th:text="${task.status}"></span></li>
-            <li class="list-group-item"><strong>Срок выполнения:</strong>
-                <span id="dueDate" th:text="${task.dueDate}"></span>
-            </li>
+            <li class="list-group-item"><strong>Срок выполнения:</strong> <span id="dueDate" th:text="${task.dueDate}"></span></li>
             <li class="list-group-item"><strong>Осталось времени:</strong> <span id="countdown" class="fw-bold"></span></li>
         </ul>
+
+        <!-- ✅ Прогресс выполнения -->
+        <div class="mb-4">
+            <h5>Прогресс выполнения:</h5>
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar bg-success"
+                     role="progressbar"
+                     th:style="${'width:' + progress + '%'}"
+                     th:text="${#numbers.formatDecimal(progress, 0, 0)} + '%'"></div>
+            </div>
+        </div>
+
+        <!-- ✅ Подзадачи -->
+        <div class="mb-4">
+            <h5>Подзадачи:</h5>
+            <div th:if="${#lists.isEmpty(subtasks)}" class="text-muted">Подзадач пока нет.</div>
+
+            <ul class="list-group mb-3" th:if="${!#lists.isEmpty(subtasks)}">
+                <li class="list-group-item d-flex justify-content-between align-items-center"
+                    th:each="s : ${subtasks}">
+                    <form th:action="@{'/subtasks/toggle/' + ${s.id}}" method="post" class="d-inline">
+                        <input type="checkbox" name="completed" th:checked="${s.completed}" onchange="this.form.submit()">
+                        <span th:text="${s.name}" class="ms-2"></span>
+                    </form>
+                    <form th:action="@{'/subtasks/delete/' + ${s.id} + '/' + ${task.id}}" method="post" class="d-inline">
+                        <button class="btn btn-sm btn-danger">🗑️</button>
+                    </form>
+                </li>
+            </ul>
+
+            <!-- Добавление новой подзадачи -->
+            <form th:action="@{'/subtasks/add/' + ${task.id}}" method="post" class="d-flex">
+                <input type="text" name="name" class="form-control me-2" placeholder="Название подзадачи..." required>
+                <button type="submit" class="btn btn-primary btn-sm">Добавить</button>
+            </form>
+        </div>
+
+        <!-- ✅ Комментарии -->
+        <div class="mb-4">
+            <h5>Комментарии:</h5>
+            <div th:if="${#lists.isEmpty(task.comments)}">Нет комментариев.</div>
+            <ul class="list-group mb-3">
+                <li class="list-group-item" th:each="c : ${task.comments}">
+                    <span th:text="${c.text}"></span>
+                    <small class="text-muted ms-2" th:text="${#dates.format(c.createdAt, 'dd.MM.yyyy HH:mm')}"></small>
+                    <form th:action="@{'/comments/delete/' + ${c.id} + '/' + ${task.id}}" method="post" class="d-inline float-end">
+                        <button class="btn btn-sm btn-danger">🗑️</button>
+                    </form>
+                </li>
+            </ul>
+
+            <form th:action="@{'/comments/add/' + ${task.id}}" method="post">
+                <textarea name="text" class="form-control mb-2" placeholder="Добавить комментарий..." required></textarea>
+                <button type="submit" class="btn btn-primary btn-sm">Добавить</button>
+            </form>
+        </div>
 
         <div class="d-flex justify-content-between">
             <a th:href="@{'/tasks/edit/' + ${task.id}}" class="btn btn-warning">✏️ Редактировать</a>
             <a href="/" class="btn btn-secondary">⬅️ Назад</a>
         </div>
-        <h5>Комментарии:</h5>
-        <div th:if="${#lists.isEmpty(task.comments)}">Нет комментариев.</div>
-        <ul class="list-group mb-3">
-            <li class="list-group-item" th:each="c : ${task.comments}">
-                <span th:text="${c.text}"></span>
-                <small class="text-muted ms-2" th:text="${#temporals.format(c.createdAt, 'dd.MM.yyyy HH:mm')}"></small>
-                <form th:action="@{'/comments/delete/' + ${c.id} + '/' + ${task.id}}" method="post" class="d-inline float-end">
-                    <button class="btn btn-sm btn-danger">🗑️</button>
-                </form>
-            </li>
-        </ul>
-
-        <form th:action="@{'/comments/add/' + ${task.id}}" method="post">
-            <textarea name="text" class="form-control mb-2" placeholder="Добавить комментарий..." required></textarea>
-            <button type="submit" class="btn btn-primary btn-sm">Добавить</button>
-        </form>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
