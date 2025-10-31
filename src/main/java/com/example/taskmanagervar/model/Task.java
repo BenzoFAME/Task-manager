@@ -42,6 +42,11 @@ public class Task {
     private List<Comment> comments = new ArrayList<>();
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Subtask> subtasks = new ArrayList<>();
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    private List<TaskFile> attachedFiles;
+
+    private boolean archived = false;
+
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();

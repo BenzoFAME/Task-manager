@@ -6,12 +6,13 @@ import com.example.taskmanagervar.model.Category;
 import com.example.taskmanagervar.model.Task;
 import com.example.taskmanagervar.repository.CategoryRepository;
 import com.example.taskmanagervar.repository.TaskRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -21,7 +22,9 @@ public class TaskService {
         this.categoryRepository = categoryRepository;
         this.taskRepository = taskRepository;
     }
-
+    public List<Task> getArchivedTasks() {
+        return taskRepository.findAllByArchivedTrue();
+    }
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
@@ -60,36 +63,66 @@ public class TaskService {
         return taskRepository.save(task1);
     }
 
-    public List<Task> getFilteredAndSortedTasks(Long categoryId , Priority priority , Status status, String filter , String sortBy) {
-        List<Task> tasks = taskRepository.findAll();
+    public List<Task> getFilteredAndSortedTasks(Long categoryId, Priority priority, Status status,
+                                                String filter, String sortBy, String keyword) {
+        List<Task> tasks = taskRepository.findAllByArchivedFalse();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            tasks = tasks.stream()
+                    .filter(t -> t.getName().toLowerCase().contains(keyword.toLowerCase())
+                            || (t.getDescription() != null && t.getDescription().toLowerCase().contains(keyword.toLowerCase())))
+                    .collect(Collectors.toList());
+        }
         if (categoryId != null) {
             tasks = tasks.stream()
-                    .filter(t -> t.getCategory() != null && t.getCategory().getId().equals(categoryId)).toList();
+                    .filter(t -> t.getCategory() != null && t.getCategory().getId().equals(categoryId))
+                    .collect(Collectors.toList());
         }
         if (priority != null) {
             tasks = tasks.stream()
-                    .filter(t -> t.getPriority() == priority).toList();
+                    .filter(t -> t.getPriority() == priority)
+                    .collect(Collectors.toList());
         }
         if (status != null) {
             tasks = tasks.stream()
-                    .filter(t -> t.getStatus() == status).toList();
+                    .filter(t -> t.getStatus() == status)
+                    .collect(Collectors.toList());
         }
         if ("overdue".equals(filter)) {
             tasks = tasks.stream()
-                    .filter(t -> t.getDueDate() != null && t.getDueDate().isBefore(LocalDate.now())).toList();
+                    .filter(t -> t.getDueDate() != null && t.getDueDate().isBefore(LocalDate.now()))
+                    .collect(Collectors.toList());
         } else if ("completed".equals(filter)) {
             tasks = tasks.stream()
-                    .filter(t->t.getStatus() == Status.COMPLETED).toList();
+                    .filter(t -> t.getStatus() == Status.COMPLETED)
+                    .collect(Collectors.toList());
         }
-        if (sortBy == null) {
-            sortBy = "createdAt"; // сортировка по умолчанию
+        if ("dueDate".equals(sortBy)) {
+            tasks.sort(Comparator.comparing(Task::getDueDate, Comparator.nullsLast(Comparator.naturalOrder())));
+        } else if ("priority".equals(sortBy)) {
+            tasks.sort(Comparator.comparing(Task::getPriority));
         }
-
-        Comparator<Task> comparator = switch (sortBy) {
-            case "dueDate" -> Comparator.comparing(Task::getDueDate, Comparator.nullsLast(Comparator.naturalOrder()));
-            case "priority" -> Comparator.comparing(Task::getPriority);
-            default -> Comparator.comparing(Task::getCreatedAt);
-        };
-        return tasks.stream().sorted(comparator).toList();
+        return tasks;
     }
+
+
+    public void archiveTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("not found"));
+        task.setArchived(true);
+        taskRepository.save(task);
+    }
+    public void unArchivedTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("not found"));
+        task.setArchived(false);
+        taskRepository.save(task);
+    }
+    public void changeStatus(Long taskId, Status newStatus) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("not found"));
+        task.setStatus(newStatus);
+        taskRepository.save(task);
+    }
+
 }
